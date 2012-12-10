@@ -83,6 +83,12 @@
     <Compile Include="dac.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="eeprom.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="neurotrig.h">
       <SubType>compile</SubType>
     </Compile>
