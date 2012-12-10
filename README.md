@@ -1,4 +1,4 @@
-firmware_NeuroTrigger3
-======================
+neurotrigger_2.0_firmware
+=========================
 
-NeuroTrigger Third Generation Firmware
+Firmware for the Neurotrigger's MCU
