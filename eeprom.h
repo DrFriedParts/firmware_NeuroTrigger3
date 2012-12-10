@@ -2,7 +2,7 @@
 #define __eeprom_h
 		
 	#include <avr/eeprom.h>
-	
+	#include "dac.h"
 	//DEFINITIONS (APPEND, DO NOT CHANGE ORDER OR SIZES!)
 		//Hold center knob approximately 2 seconds to save
 		#define EEPROM_HOLD_TO_SAVE_TIME 1000

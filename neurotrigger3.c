@@ -6,6 +6,7 @@
 #include "dac.h"
 #include "adc.h"
 #include "ac.h"
+#include "eeprom.h"
 #include "neurotrig.h"
 #include "pwm.h"
 #include "uart_buffer.h"
@@ -16,6 +17,7 @@ int main(void){
 	uint8_t blah;
 	uint16_t blah16;
 	int8_t updown;
+	uint16_t push_counter = 0;
 
 	//[LED's, Button, & Switches]
 		init_ui(); //init LED's first so that they are available for debugging
@@ -59,6 +61,9 @@ int main(void){
 	//[PWM] 
 		init_pwm(); // and serial trigger
 
+	//[EEPROM]
+		init_eeprom();
+
 	//[Realtime Loop Timer]
 		//Use PortC's T/C0
 		TCC0.CTRLA = 0x07; //Start the timer; Div1024 operation = 32M/1024 = 31250
@@ -91,19 +96,24 @@ int main(void){
 			service_leds();
 			service_button();
 			service_uart_buffer();
+			service_eeprom();
 			
 			if (STATE_Button == BUTTON_PUSHED){
 				if (pwm_mode() == false){
 					//DIODE mode
-					STATE_Autolevel = AUTOLEVEL_DIODE;
-					led_on(LED_MID);
+					if (++push_counter >= EEPROM_HOLD_TO_SAVE_TIME){
+						STATE_Autolevel = AUTOLEVEL_DIODE;
+						led_on(LED_LEFT);
+						led_on(LED_MID);						
+					}						
 				}
 				else{
 					//AUDIO mode
-					STATE_Autolevel = AUTOLEVEL_AUDIO;
-					dac_output0(ENABLE);
-					led_on(LED_MID);
+					//--deprecated, no longer supported.
 				}					
+			}
+			else{
+				push_counter = 0;
 			}
 
 			//PERFORM AUTO-LEVELING!
@@ -115,54 +125,17 @@ int main(void){
 				//Determine background level
 					adc_ch1_stats(1024);
 				//Set background level
-					dac_out0((adc_avg*5)/8 + 170); //background (x*0.625 = x*5/8)
-				STATE_Autolevel = AUTOLEVEL_WAIT;
+					dac_background = (adc_avg*5)/8 + 170; //background (x*0.625 = x*5/8)
+					dac_threshold = dac_background + 200;
+					dac_out0(dac_background); 
+					dac_out1(dac_threshold);
+				//Write to permanent memory
+					eeprom_save();
+				//We're done!
+					led_off(LED_LEFT);
+					led_off(LED_MID);
+					STATE_Autolevel = AUTOLEVEL_IDLE;
 				break;
-			case AUTOLEVEL_AUDIO:
-				//We can't observe the signal directly so we need to hunt for the presumed DC level by...
-				//Decrease DAC until signal is saturated high		
-				adc_avg = 0;						
-				while(adc_avg < AUDIO_THRESHOLD_TOP){
-					adc_ch1_stats(32);
-					if(adc_avg <= AUDIO_THRESHOLD_TOP) {
-						if(dac_read0() == 0) adc_avg = AUDIO_THRESHOLD_TOP; //safety condition -- can't reach loop exit condition, so lets just exit and hope for the best!
-						if(dac_read0() >= 100) {dac_out0(dac_read0()-100);}
-						else {dac_out0(0);}	
-					}						
-				}				
-				//Increase DAC until signal is saturated low
-				adc_avg = 0xFFFF;
-				while(adc_avg > AUDIO_THRESHOLD_BOTTOM){
-					adc_ch1_stats(32);
-					if(adc_avg >= AUDIO_THRESHOLD_BOTTOM) {
-						if(dac_read0() == 0x0FFF) adc_avg = AUDIO_THRESHOLD_BOTTOM; //safety condition -- can't reach loop exit condition, so lets just exit and hope for the best!
-						if(dac_read0() < 0x0FFF) {dac_out0(dac_read0()+100);}
-						else {dac_out0(0x0FFF);}
-					}
-				}		
-				//Now add some margin to the level for stability
-				dac_out0(dac_read0()+600);
-				STATE_Autolevel = AUTOLEVEL_DONE;
-				break;
-			case AUTOLEVEL_WAIT:
-				STATE_Autolevel = AUTOLEVEL_WAIT2;
-				break;
-			case AUTOLEVEL_WAIT2:
-				//Measure resulting amplified level		
-					adc_ch0_stats(1024);
-				//Set threshold!
-					dac_out1((adc_max*5)/8 + 512); //threshold
-					uart_send_byte(&uctrl, ' ');
-					uart_send_byte(&uctrl, '+');
-					uart_send_HEX16(&uctrl, adc_max*5/8);
-					uart_send_byte(&uctrl, '.');
-					uart_send_HEX16(&uctrl, adc_max);
-					uart_send_byte(&uctrl, ' ');
-				//Done! -- just fall through					
-			case AUTOLEVEL_DONE:
-				led_off(LED_MID);
-				STATE_Autolevel = AUTOLEVEL_IDLE;
-				//fall through to next case (no break)
 			case AUTOLEVEL_IDLE:
 			default:		
 				break;

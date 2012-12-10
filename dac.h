@@ -4,7 +4,9 @@
 	//DEFINITIONS
 
 	//GLOBAL STATE
-
+		uint16_t dac_background;
+		uint16_t dac_threshold;
+		
 	//FUNCTIONS
 		void init_dac();
 		void dac_output0(uint8_t config);
