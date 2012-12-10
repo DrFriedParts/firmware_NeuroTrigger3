@@ -10,6 +10,7 @@
 	//FUNCTIONS
 		void init_dac();
 		void dac_output0(uint8_t config);
+		void dac_output1(uint8_t config);
 		uint16_t dac_out0(uint16_t value);
 		uint16_t dac_out1(uint16_t value);
 		uint16_t dac_read0(void);

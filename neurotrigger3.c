@@ -18,6 +18,7 @@ int main(void){
 	uint16_t blah16;
 	int8_t updown;
 	uint16_t push_counter = 0;
+	uint8_t push_blinker = 0;
 
 	//[LED's, Button, & Switches]
 		init_ui(); //init LED's first so that they are available for debugging
@@ -134,8 +135,21 @@ int main(void){
 				//We're done!
 					led_off(LED_LEFT);
 					led_off(LED_MID);
-					STATE_Autolevel = AUTOLEVEL_IDLE;
+					STATE_Autolevel = AUTOLEVEL_DONE;
 				break;
+			case AUTOLEVEL_DONE:
+				if (STATE_Button == BUTTON_RELEASED){
+					STATE_Autolevel = AUTOLEVEL_IDLE;
+					led_off(LED_LEFT);
+					led_off(LED_MID);
+				}
+				else {
+					if (++push_blinker > 10){
+						led_toggle(LED_LEFT);
+						led_toggle(LED_MID);
+						push_blinker = 0;
+					}
+				}
 			case AUTOLEVEL_IDLE:
 			default:		
 				break;

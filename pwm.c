@@ -66,7 +66,8 @@ void pwm_disable(){
 
 	//DIGITAL-TO-ANALOG CONVERTER (DAC)
 		//PORTB.DAC0 -- Vbackground; Enable to allow DAC operation
-		dac_output0(DISABLE);
+		dac_output0(ENABLE);
+		dac_output1(ENABLE);
 
 	//ANALOG COMPARATOR
 		init_ac();

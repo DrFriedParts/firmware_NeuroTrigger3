@@ -2,6 +2,7 @@
 #include <avr/interrupt.h>
 #include "utilities.h"
 #include "ui.h"
+#include "dac.h"
 
 //Handles the DAC for PORTB
 
@@ -22,6 +23,16 @@ void dac_output0(uint8_t config){
 	}
 }
 
+void dac_output1(uint8_t config){
+	switch(config){
+		case DISABLE:
+		DACB.CTRLA = DACB.CTRLA & B8(11110111); //NO DAC output to pin PB3
+		break;
+		case ENABLE:
+		default:
+		DACB.CTRLA = DACB.CTRLA | B8(00001000); //DAC output to pin PB3
+	}
+}
 //#############################################################
 //## DACs
 //#############################################################
