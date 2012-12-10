@@ -102,11 +102,13 @@ int main(void){
 			if (STATE_Button == BUTTON_PUSHED){
 				if (pwm_mode() == false){
 					//DIODE mode
-					if (++push_counter >= EEPROM_HOLD_TO_SAVE_TIME){
-						STATE_Autolevel = AUTOLEVEL_DIODE;
-						led_on(LED_LEFT);
-						led_on(LED_MID);						
-					}						
+					if (STATE_Autolevel == AUTOLEVEL_IDLE){
+						if (++push_counter >= EEPROM_HOLD_TO_SAVE_TIME){
+							STATE_Autolevel = AUTOLEVEL_DIODE;
+							led_on(LED_LEFT);
+							led_on(LED_MID);						
+						}	
+					}											
 				}
 				else{
 					//AUDIO mode
@@ -144,12 +146,13 @@ int main(void){
 					led_off(LED_MID);
 				}
 				else {
-					if (++push_blinker > 10){
+					if (++push_blinker > 20){
 						led_toggle(LED_LEFT);
 						led_toggle(LED_MID);
 						push_blinker = 0;
 					}
 				}
+				break;
 			case AUTOLEVEL_IDLE:
 			default:		
 				break;
